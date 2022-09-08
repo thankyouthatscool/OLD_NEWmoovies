@@ -29,7 +29,7 @@ export const main = async () => {
 
     case "exit":
       console.log(
-        chalk.bold.yellow(
+        chalk.bold.white(
           "\nCatch you guys on the flippity flip!\n".toUpperCase()
         )
       );

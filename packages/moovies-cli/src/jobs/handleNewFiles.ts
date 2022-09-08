@@ -36,10 +36,23 @@ export const handleNewFiles = async (dir: string) => {
     });
 
     if (process.env.NODE_ENV === "test") {
+      const allNewDirs = Array.from(
+        new Set(movieDetails.map((location) => location.newDir))
+      );
+
+      checkAllNewLocations(allNewDirs);
+
       movieDetails.forEach((movie) => {
-        testNewLocation(movie.newDir);
         renameSync(movie.oldLocation, movie.newLocation);
       });
+
+      console.log(
+        `${chalk.bold.green(
+          `${movieDetails.length} movie(s) renamed successfully!`
+        )}`
+      );
+
+      main();
     }
 
     const res = await inquirer.prompt([
@@ -51,10 +64,23 @@ export const handleNewFiles = async (dir: string) => {
     ]);
 
     if (res.confirm_rename === true) {
+      const allNewDirs = Array.from(
+        new Set(movieDetails.map((location) => location.newDir))
+      );
+
+      checkAllNewLocations(allNewDirs);
+
       movieDetails.forEach((movie) => {
-        testNewLocation(movie.newDir);
         renameSync(movie.oldLocation, movie.newLocation);
       });
+
+      console.log(
+        `${chalk.bold.green(
+          `${movieDetails.length} movie(s) renamed successfully!`
+        )}`
+      );
+
+      main();
     }
   } else {
     console.log(
@@ -160,8 +186,10 @@ const getMovieParentDir = (movieTitleWordArray: string[]) => {
   }
 };
 
-const testNewLocation = (dir: string) => {
-  if (!existsSync(dir)) {
-    mkdirSync(dir);
-  }
+const checkAllNewLocations = (newLocations: string[]) => {
+  newLocations.forEach((location) => {
+    if (!existsSync(location)) {
+      mkdirSync(location);
+    }
+  });
 };
