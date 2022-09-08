@@ -35,6 +35,13 @@ export const handleNewFiles = async (dir: string) => {
       console.log(chalk.blue(movie.newLocation, "\n"));
     });
 
+    if (process.env.NODE_ENV === "test") {
+      movieDetails.forEach((movie) => {
+        testNewLocation(movie.newDir);
+        renameSync(movie.oldLocation, movie.newLocation);
+      });
+    }
+
     const res = await inquirer.prompt([
       {
         message: "Does that look right?",
@@ -76,25 +83,26 @@ const getDirContent = (dir: string, recursive = false) => {
 
 const formatMovieLocationString = (location: string, dir: string) => {
   const { base, ext } = parse(location);
-
   const { groups } = SCENE_MOVIE_REGEX.exec(base)!;
+  const titleWordArray = getTitleWordArray(groups?.title!);
+  const formattedMovieTitle = formatMovieTitle(titleWordArray);
 
-  const formattedMovieTitle = formatMovieTitle(groups?.title!);
+  const movieParentDir = getMovieParentDir(titleWordArray)!;
 
   return {
     formattedMovieTitle,
     oldLocation: location,
-    newDir: join(dir, getMovieParentDir(formattedMovieTitle)!),
+    newDir: join(dir, movieParentDir),
     newLocation: join(
       dir,
-      getMovieParentDir(formattedMovieTitle)!,
+      movieParentDir,
       `${formattedMovieTitle} (${groups?.year})${ext}`
     ),
     year: groups?.year!,
   };
 };
 
-const formatMovieTitle = (movieTitle: string) => {
+const getTitleWordArray = (movieTitle: string) => {
   let movieTitleWords: string[];
 
   if (PERIOD_SEPARATED_REGEX.test(movieTitle)) {
@@ -109,7 +117,11 @@ const formatMovieTitle = (movieTitle: string) => {
       .filter((word) => !!word);
   }
 
-  return movieTitleWords
+  return movieTitleWords;
+};
+
+const formatMovieTitle = (movieTitleWordArray: string[]) => {
+  return movieTitleWordArray
     .map((word, index) => formatWord(word, index))
     .join(" ");
 };
@@ -130,33 +142,19 @@ const formatWord = (word: string, index: number) => {
   return `${word[0].toUpperCase()}${word.slice(1)}`;
 };
 
-const getMovieParentDir = (movieTitle: string) => {
-  let movieTitleWords: string[];
-
-  if (PERIOD_SEPARATED_REGEX.test(movieTitle)) {
-    movieTitleWords = movieTitle
-      .trim()
-      .split(".")
-      .filter((word) => !!word);
-  } else {
-    movieTitleWords = movieTitle
-      .trim()
-      .split(" ")
-      .filter((word) => !!word);
-  }
-
-  for (let i = 0; i < movieTitleWords.length; i++) {
-    if (i === movieTitleWords.length - 1) {
-      return movieTitleWords[i][0].toUpperCase();
+const getMovieParentDir = (movieTitleWordArray: string[]) => {
+  for (let i = 0; i < movieTitleWordArray.length; i++) {
+    if (i === movieTitleWordArray.length - 1) {
+      return movieTitleWordArray[i][0].toUpperCase();
     }
 
-    if (/a|an|the/i.test(movieTitleWords[i])) {
+    if (/a|an|the/i.test(movieTitleWordArray[i])) {
       continue;
     } else {
-      if (!isNaN(parseInt(movieTitleWords[i]))) {
+      if (!isNaN(parseInt(movieTitleWordArray[i]))) {
         return "#";
       } else {
-        return movieTitleWords[i][0].toUpperCase();
+        return movieTitleWordArray[i][0].toUpperCase();
       }
     }
   }
