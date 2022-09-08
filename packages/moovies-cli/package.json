@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
+    "build": "rm -rf ./dist && yarn tsc",
     "dev": "nodemon",
     "dev:run": "yarn ts-node --transpile-only ./src/index.ts",
     "test": "yarn jest --watch"
