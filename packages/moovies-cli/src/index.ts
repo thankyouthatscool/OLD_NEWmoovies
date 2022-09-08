@@ -1,10 +1,12 @@
 import chalk from "chalk";
 import inquirer from "inquirer";
 
-import { handleNewFiles } from "./jobs";
+import { handleNewFiles, scanDownloadsFolder } from "./jobs";
 
+export const DOWNLOADS_DIR = "/mnt/c/Users/Sasha/Downloads";
 export const PROGRAM_OPTIONS = [
   { name: "Format new movies", value: "new_files" },
+  { name: "Scan Downloads Folder", value: "scan_downloads" },
   { name: "Exit", value: "exit" },
 ];
 export const TARGET_DIR = "/mnt/d/Movies";
@@ -26,7 +28,10 @@ export const main = async () => {
       handleNewFiles(TARGET_DIR);
 
       return;
+    case "scan_downloads":
+      scanDownloadsFolder(DOWNLOADS_DIR, TARGET_DIR);
 
+      return;
     case "exit":
       console.log(
         chalk.bold.white(
@@ -38,8 +43,10 @@ export const main = async () => {
     default:
       console.log(chalk.bold.red("Not a valid option!"));
 
-      return;
+      main();
   }
 };
 
 main();
+
+// scanDownloadsFolder(DOWNLOADS_DIR, TARGET_DIR);

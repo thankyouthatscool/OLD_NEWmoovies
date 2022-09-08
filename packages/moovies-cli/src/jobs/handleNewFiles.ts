@@ -4,10 +4,8 @@ import glob from "glob";
 import inquirer from "inquirer";
 import { join, parse } from "node:path";
 
+import { PERIOD_SEPARATED_REGEX, SCENE_MOVIE_REGEX } from ".";
 import { main } from "..";
-
-export const PERIOD_SEPARATED_REGEX = /^((\w+)\.)+/;
-export const SCENE_MOVIE_REGEX = /^(?<title>.*).?(?<year>\d{4}).?(\d{3,4})p/;
 
 export const handleNewFiles = async (dir: string) => {
   console.log(
