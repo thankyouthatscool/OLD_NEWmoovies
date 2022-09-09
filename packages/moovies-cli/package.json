@@ -7,11 +7,11 @@
     "build": "rm -rf ./dist && yarn tsc",
     "dev": "nodemon",
     "dev:run": "yarn ts-node --transpile-only ./src/index.ts",
+    "open:root": "code ../..",
     "test": "yarn jest --watch"
   },
   "dependencies": {
     "chalk": "4.1.2",
-    "cp-file": "^7.0.0",
     "cpy": "^8.1.2",
     "fs-extra": "^10.1.0",
     "glob": "^8.0.3",
