@@ -3,16 +3,24 @@ import cpy from "cpy";
 import { renameSync, rmSync, statSync } from "fs-extra";
 import glob from "glob";
 import inquirer from "inquirer";
-import throttle from "lodash.throttle";
 import { join, parse } from "node:path";
 
 import { MOVIE_EXTENSIONS, SCENE_MOVIE_REGEX } from ".";
 import { main } from "..";
+import { humanFileSize, reportCopyProgressNew } from "../utilities";
 
 export const scanDownloadsFolder = async (
   downloadsDir: string,
   movieLibraryDir: string
 ) => {
+  console.log(
+    chalk.bold.green(
+      `Looking for ${chalk.red("SCENE")} movies in ${chalk.blue(
+        downloadsDir
+      )}\n`
+    )
+  );
+
   const downloadsContent = glob.sync(
     `${downloadsDir}/**/*.+(${MOVIE_EXTENSIONS.join("|")})`
   );
@@ -21,13 +29,25 @@ export const scanDownloadsFolder = async (
     SCENE_MOVIE_REGEX.test(location)
   );
 
-  console.log(chalk.bold.yellow(`Found ${sceneMovies.length} movie(s):\n`));
+  if (!sceneMovies.length) {
+    console.log(
+      chalk.bold.yellow(
+        `No new ${chalk.red("SCENE")} movies found in ${chalk.blue(
+          downloadsDir
+        )}\n`
+      )
+    );
+
+    return main();
+  }
+
+  console.log(chalk.bold.yellow(`Found ${sceneMovies.length} movie(s):`));
 
   sceneMovies.forEach((movie) => {
     const { base } = parse(movie);
     const { size } = statSync(movie);
 
-    console.log(chalk.bold.green(base), "->", chalk.red(size), "bytes", "\n");
+    console.log(chalk.bold.green(base), "->", chalk.red(humanFileSize(size)));
   });
 
   const { copy_confirmation } = await inquirer.prompt([
@@ -39,24 +59,19 @@ export const scanDownloadsFolder = async (
   ]);
 
   if (copy_confirmation) {
+    const { addDataToTrack, updateOutput } = reportCopyProgressNew();
+
     await Promise.all(
       sceneMovies.map(async (movie) => {
-        const reportCopyProgress = throttle(
-          ({ completedSize }: cpy.ProgressData) => {
-            console.log(
-              `${chalk.bold.blue(base)} -> ${chalk.bold.green(
-                completedSize
-              )}/${chalk.bold.yellow(size)}`
-            );
-          },
-          1000
-        );
         const { base, ext } = parse(movie);
         const { size } = statSync(movie);
-        const destination = join(movieLibraryDir, base);
-        await cpy(movie, destination).on("progress", reportCopyProgress);
 
-        console.log(`${chalk.bold.green(base)} ${chalk.bold.blue("copied!")}`);
+        addDataToTrack({ movie, size });
+
+        const destination = join(movieLibraryDir, base);
+        await cpy(movie, destination).on("progress", ({ completedSize }) => {
+          updateOutput({ completedSize, movie });
+        });
 
         const res = glob.sync(`${destination}/*${ext}`);
         renameSync(res[0], join(movieLibraryDir, `TMP_${base}`));

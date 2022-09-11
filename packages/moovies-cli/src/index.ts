@@ -1,5 +1,7 @@
 import chalk from "chalk";
+import { mkdirSync, rmSync, writeFileSync } from "fs-extra";
 import inquirer from "inquirer";
+import { join } from "node:path";
 
 import { handleNewFiles, scanDownloadsFolder } from "./jobs";
 
@@ -49,4 +51,18 @@ export const main = async () => {
 
 main();
 
-// scanDownloadsFolder(DOWNLOADS_DIR, TARGET_DIR);
+// (async () => {
+//   const TEST_DOWNLOADS_DIR = join(__dirname, "../__TEST__");
+//   const TEST_TARGET_DIR = join(__dirname, "../__TEST__/Movies");
+
+//   // mkdirSync(TEST_DOWNLOADS_DIR);
+//   mkdirSync(TEST_TARGET_DIR);
+
+//   // ["Under.the.Sea.1999.1080p.mp4"].forEach((movie) => {
+//   //   writeFileSync(join(TEST_DOWNLOADS_DIR, movie), "TEST DATA".repeat(99));
+//   // });
+
+//   await scanDownloadsFolder(TEST_DOWNLOADS_DIR, TEST_TARGET_DIR);
+
+//   rmSync(TEST_TARGET_DIR, { force: true, recursive: true });
+// })();

@@ -11,7 +11,7 @@ export const handleNewFiles = async (dir: string) => {
   console.log(
     chalk.bold.green(
       `Looking for new ${chalk.red("SCENE")} movies in`,
-      `${chalk.yellow(dir)}\n`
+      `${chalk.blue(dir)}\n`
     )
   );
 
