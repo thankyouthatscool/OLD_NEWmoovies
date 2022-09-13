@@ -1,3 +1,4 @@
+import { StyledEngineProvider } from "@mui/material";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Provider as ReduxProvider } from "react-redux";
@@ -9,8 +10,10 @@ import { GlobalStyle } from "./theme";
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ReduxProvider store={store}>
-      <GlobalStyle />
-      <App />
+      <StyledEngineProvider injectFirst>
+        <GlobalStyle />
+        <App />
+      </StyledEngineProvider>
     </ReduxProvider>
   </React.StrictMode>
 );

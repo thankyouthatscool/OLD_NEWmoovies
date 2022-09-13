@@ -16,9 +16,13 @@ export const GlobalStyle = createGlobalStyle`
     height: 100%;
 
     margin: 0;
+    min-height: 500px;
+  min-width: 500px;
 
     padding: 0;
 
+    
+    
     width: 100%;
-  }
+  } 
 `;

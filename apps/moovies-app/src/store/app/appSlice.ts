@@ -1,21 +1,26 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 export interface AppState {
-  movieExtensions: string[];
-  movieLibraryPath: string;
-  scanLocations: string[];
+  isSettingsModalOpen: boolean;
 }
 
 const initialState: AppState = {
-  movieExtensions: ["mp4"],
-  movieLibraryPath: "/mnt/d/Movies",
-  scanLocations: ["/mnt/c/Users/Sasha/Downloads"],
+  isSettingsModalOpen: true,
 };
 
 export const appSlice = createSlice({
   name: "app",
   initialState,
-  reducers: {},
+  reducers: {
+    closeSettingsModal: (state) => {
+      state.isSettingsModalOpen = false;
+    },
+    openSettingsModal: (state) => {
+      state.isSettingsModalOpen = true;
+    },
+  },
 });
+
+export const { closeSettingsModal, openSettingsModal } = appSlice.actions;
 
 export default appSlice.reducer;

@@ -1,110 +1,220 @@
-import {
-  Button,
-  CardActions,
-  CardContent,
-  Chip,
-  Divider,
-  Modal,
-  Tab,
-  Tabs,
-  Typography,
-} from "@mui/material";
-import { open } from "@tauri-apps/api/dialog";
-import { useEffect, useState } from "react";
+import { Button, Chip, Divider, Modal, Typography } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "@/hooks";
-import { closeSettingsModal } from "@/store";
-import { ModalBodyWrapper, StyledCard } from "./Styled";
+import {
+  closeSettingsModal,
+  saveSettings,
+  setNewSettings,
+  setSelectedSettingsTab,
+} from "@/store";
+import { ModalBodyWrapper, SettingsOptionButton, StyledCard } from "./Styled";
 
 export const SettingsModal = () => {
-  const [tabsValue, setTabsValue] = useState<number>(0);
-
   const dispatch = useAppDispatch();
 
-  const { isSettingsModalOpen } = useAppSelector(({ settings }) => settings);
+  const { isSettingsModalOpen } = useAppSelector(({ app }) => app);
+  const { newSettings, selectedTab } = useAppSelector(
+    ({ settings }) => settings
+  );
 
-  const handleCancelClick = () => {
+  const handleCancel = () => {
+    dispatch(closeSettingsModal());
+    dispatch(setNewSettings({}));
+  };
+
+  const handleSave = () => {
+    dispatch(saveSettings(newSettings));
     dispatch(closeSettingsModal());
   };
 
   return (
-    <Modal onClose={handleCancelClick} open={isSettingsModalOpen}>
+    <Modal
+      onClose={handleCancel}
+      open={isSettingsModalOpen}
+      style={{ display: "flex" }}
+    >
       <ModalBodyWrapper>
         <StyledCard>
+          <div style={{ background: "#eee" }}>
+            <SettingsOption
+              index={0}
+              label={"Content"}
+              targetOptions={["movieExtensions", "scanLocations"]}
+            />
+            <SettingsOption index={1} label={"Library"} targetOptions={[]} />
+          </div>
           <div
             style={{
-              padding: "1rem 1rem",
+              display: "flex",
+              flexDirection: "column",
+              padding: "0.25rem 1rem 1rem 1rem",
+              width: "100%",
             }}
           >
-            <Typography variant="h5">Preferences</Typography>
-          </div>
-          <CardContent
-            style={{
-              flex: 1,
-              overflow: "hidden auto",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                height: "100%",
-              }}
-            >
-              <Tabs
-                onChange={(_, newValue) => {
-                  setTabsValue(() => newValue);
-                }}
-                orientation="vertical"
-                style={{
-                  height: "100%",
-                  width: "150px",
-                }}
-                value={tabsValue}
-                variant="scrollable"
-              >
-                <Tab label="Library" />
-                <Tab label="Search" />
-              </Tabs>
-              <div style={{ flex: "1", marginLeft: "1rem" }}>
-                {tabsValue === 0 ? <LibrarySettings /> : <SearchSettings />}
-              </div>
+            <div style={{ flex: 1 }}>
+              {selectedTab === 0 ? <ContentSettings /> : "Library Settings"}
             </div>
-          </CardContent>
-          <CardActions style={{ justifyContent: "flex-end" }}>
-            <Button
-              color="warning"
-              onClick={handleCancelClick}
-              variant="outlined"
-            >
-              Close
-            </Button>
-            <Button variant="contained">Save</Button>
-          </CardActions>
+            <div style={{ display: "flex", justifyContent: "end" }}>
+              <Button color="warning" onClick={handleCancel} variant="text">
+                Cancel
+              </Button>
+              <Button
+                disabled={!Object.keys(newSettings).length}
+                onClick={handleSave}
+                variant="contained"
+              >
+                Save
+              </Button>
+            </div>
+          </div>
         </StyledCard>
       </ModalBodyWrapper>
     </Modal>
   );
 };
 
-export const LibrarySettings = () => {
-  const { movieLibraryPath } = useAppSelector(({ app }) => app);
+export const SettingsOption = ({
+  index,
+  label,
+  targetOptions,
+}: {
+  index: number;
+  label: string;
+  targetOptions: string[];
+}) => {
+  const dispatch = useAppDispatch();
+
+  const { newSettings, selectedTab } = useAppSelector(
+    ({ settings }) => settings
+  );
 
   return (
-    <>
-      <Typography variant="h5">Library Location</Typography>
-      <Divider />
-      <Typography>{movieLibraryPath}</Typography>
-      <Button>Change</Button>
-    </>
+    <SettingsOptionButton
+      fullWidth
+      isModified={
+        !!Object.keys(newSettings).filter((newSetting) =>
+          targetOptions.includes(newSetting)
+        ).length
+      }
+      isSelected={index === selectedTab}
+      onClick={() => {
+        dispatch(setSelectedSettingsTab(index));
+      }}
+      variant="text"
+    >
+      {label}
+    </SettingsOptionButton>
   );
 };
 
-export const SearchSettings = () => {
+export const ContentSettings = () => {
+  const dispatch = useAppDispatch();
+
+  const { newSettings, settings } = useAppSelector(({ settings }) => settings);
+
   return (
     <>
-      <Typography variant="body2">
-        Settings related to scan location(s).
+      <Typography variant="h6" fontWeight={"bold"}>
+        Content Settings
       </Typography>
+      <Divider style={{ marginTop: "0.5rem" }} />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginTop: "1rem",
+        }}
+      >
+        <div>
+          <Typography>Scan Locations</Typography>
+          <Typography variant="caption">
+            Locations that will be scanned
+          </Typography>
+        </div>
+        <Button>Add</Button>
+      </div>
+      <Divider style={{ marginTop: "0.5rem" }} />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginTop: "1rem",
+        }}
+      >
+        <div>
+          <Typography>Target File Extensions</Typography>
+          <Typography variant="caption">
+            What movie extensions to look for?
+          </Typography>
+        </div>
+        <div>
+          {newSettings.movieExtensions
+            ? newSettings.movieExtensions.map((extension) => {
+                return (
+                  <Chip
+                    color="info"
+                    key={extension}
+                    label={extension}
+                    {...(newSettings.movieExtensions!.length > 1 && {
+                      onDelete: () => {
+                        dispatch(
+                          setNewSettings({
+                            movieExtensions: [
+                              ...newSettings.movieExtensions!.filter(
+                                (currentExtension) =>
+                                  currentExtension !== extension
+                              ),
+                            ],
+                          })
+                        );
+                      },
+                    })}
+                  />
+                );
+              })
+            : settings.movieExtensions.map((extension) => {
+                return (
+                  <Chip
+                    color="info"
+                    key={extension}
+                    label={extension}
+                    {...(settings.movieExtensions.length > 1 && {
+                      onDelete: () => {
+                        dispatch(
+                          setNewSettings({
+                            movieExtensions: [
+                              ...settings.movieExtensions.filter(
+                                (currentExtension) =>
+                                  currentExtension !== extension
+                              ),
+                            ],
+                          })
+                        );
+                      },
+                    })}
+                  />
+                );
+              })}
+        </div>
+        <Button
+          onClick={() => {
+            dispatch(setNewSettings({ movieExtensions: [".mp4", ".mkv"] }));
+          }}
+        >
+          Add
+        </Button>
+      </div>
+      <pre>
+        {JSON.stringify(
+          {
+            newSettings,
+            newSettingsKeys: Object.keys(newSettings),
+            settings,
+          },
+          null,
+          2
+        )}
+      </pre>
     </>
   );
 };

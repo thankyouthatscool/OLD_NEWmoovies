@@ -1,26 +1,49 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+
+type NewSettings = Partial<Settings>;
+
+interface Settings {
+  movieExtensions: string[];
+  movieLibraryPath: string;
+  scanLocations: string[];
+}
 
 export interface SettingsState {
-  isSettingsModalOpen: boolean;
+  newSettings: NewSettings;
+  selectedTab: number;
+  settings: Settings;
 }
 
 const initialState: SettingsState = {
-  isSettingsModalOpen: true,
+  newSettings: {},
+  selectedTab: 0,
+  settings: {
+    movieExtensions: ["mkv", "mp4"],
+    movieLibraryPath: "/mnt/d/Movies",
+    scanLocations: ["/mnt/c/Users/Sasha/Downloads"],
+  },
 };
 
 export const settingsSlice = createSlice({
   name: "settings",
   initialState,
   reducers: {
-    closeSettingsModal: (state) => {
-      state.isSettingsModalOpen = false;
+    saveSettings: (state, { payload }: PayloadAction<NewSettings>) => {
+      console.log(payload);
+
+      state.settings = { ...state.settings, ...payload };
+      state.newSettings = {};
     },
-    openSettingsModal: (state) => {
-      state.isSettingsModalOpen = true;
+    setNewSettings: (state, { payload }: PayloadAction<NewSettings>) => {
+      state.newSettings = payload;
+    },
+    setSelectedSettingsTab: (state, { payload }: PayloadAction<number>) => {
+      state.selectedTab = payload;
     },
   },
 });
 
-export const { closeSettingsModal, openSettingsModal } = settingsSlice.actions;
+export const { saveSettings, setNewSettings, setSelectedSettingsTab } =
+  settingsSlice.actions;
 
 export default settingsSlice.reducer;
