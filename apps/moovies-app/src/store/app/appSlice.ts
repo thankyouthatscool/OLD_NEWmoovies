@@ -5,7 +5,7 @@ export interface AppState {
 }
 
 const initialState: AppState = {
-  isSettingsModalOpen: true,
+  isSettingsModalOpen: false,
 };
 
 export const appSlice = createSlice({

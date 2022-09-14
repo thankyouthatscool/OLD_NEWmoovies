@@ -1,7 +1,7 @@
-import { Button, Typography } from "@mui/material";
-import { invoke, process } from "@tauri-apps/api";
-import { open } from "@tauri-apps/api/dialog";
-import { useCallback, useState } from "react";
+import SettingsTwoToneIcon from "@mui/icons-material/SettingsTwoTone";
+import { Button, IconButton, Typography } from "@mui/material";
+import { invoke } from "@tauri-apps/api";
+import { useState } from "react";
 
 import { SettingsModal } from "@/components";
 import { useAppDispatch, useAppSelector } from "@/hooks";
@@ -13,61 +13,59 @@ export const App = () => {
 
   const dispatch = useAppDispatch();
 
-  const { newSettings, settings } = useAppSelector(({ settings }) => settings);
+  const {
+    settings: { movieExtensions, scanLocations },
+  } = useAppSelector(({ settings }) => settings);
 
-  // const handleOtherClick = useCallback(async () => {
-  //   const res = await Promise.all(
-  //     scanLocations.map(async (location) => {
-  //       const locationRes = await Promise.all(
-  //         movieExtensions.map(async (fileExtension) => {
-  //           try {
-  //             const res: string[] = await invoke("scan_dir_for_movies", {
-  //               path: `${location}/**/*.${fileExtension}`,
-  //             });
+  const handleOtherClick = async () => {
+    const res = await Promise.all(
+      scanLocations.map(async (scanLocation) => {
+        try {
+          const locationRes = await Promise.all(
+            movieExtensions.map(async (extension) => {
+              const res: string[] = await invoke("scan_dir_for_movies", {
+                path: `${scanLocation}/**/*${extension}`,
+              });
 
-  //             return res;
-  //           } catch (e) {
-  //             console.log(e);
+              return res;
+            })
+          );
 
-  //             return [];
-  //           }
-  //         })
-  //       );
+          return locationRes.reduce((acc, val) => {
+            return [...acc, ...val];
+          }, [] as string[]);
+        } catch {
+          return [];
+        }
+      })
+    );
 
-  //       return locationRes.reduce((acc, val) => {
-  //         return [...acc, ...val];
-  //       }, [] as string[]);
-  //     })
-  //   );
+    const foundSceneMovies = res
+      .reduce((acc, val) => {
+        return [...acc, ...val];
+      }, [] as string[])
+      .filter((file) => /^(?<title>.*).?(?<year>\d{4}).?(\d{3,4})p/.test(file));
 
-  //   const foundFilesResult = res.reduce((acc, val) => {
-  //     return [...acc, ...val];
-  //   }, [] as string[]);
-
-  //   setFoundFiles(() => foundFilesResult);
-  // }, [movieExtensions, scanLocations]);
+    setFoundFiles(() => foundSceneMovies);
+  };
 
   return (
     <>
       <SettingsModal />
       <RootWrapper>
-        <Button
+        <IconButton
           onClick={() => {
             dispatch(openSettingsModal());
           }}
         >
-          Open Settings
-        </Button>
-        <pre>
-          {JSON.stringify(
-            {
-              newSettings,
-              settings,
-            },
-            null,
-            2
-          )}
-        </pre>
+          <SettingsTwoToneIcon />
+        </IconButton>
+        <Typography variant="caption">
+          Looking for {movieExtensions.join(", ")} files in{" "}
+          {scanLocations.join(", ")}.
+        </Typography>
+        <Button onClick={handleOtherClick}>SCAN</Button>
+        <pre>{JSON.stringify({ foundFiles }, null, 2)}</pre>
       </RootWrapper>
     </>
   );

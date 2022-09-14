@@ -18,7 +18,7 @@ const initialState: SettingsState = {
   newSettings: {},
   selectedTab: 0,
   settings: {
-    movieExtensions: ["mkv", "mp4"],
+    movieExtensions: [".mp4"],
     movieLibraryPath: "/mnt/d/Movies",
     scanLocations: ["/mnt/c/Users/Sasha/Downloads"],
   },
@@ -29,8 +29,6 @@ export const settingsSlice = createSlice({
   initialState,
   reducers: {
     saveSettings: (state, { payload }: PayloadAction<NewSettings>) => {
-      console.log(payload);
-
       state.settings = { ...state.settings, ...payload };
       state.newSettings = {};
     },

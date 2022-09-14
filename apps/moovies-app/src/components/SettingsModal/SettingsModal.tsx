@@ -1,4 +1,14 @@
-import { Button, Chip, Divider, Modal, Typography } from "@mui/material";
+import ControlPointTwoToneIcon from "@mui/icons-material/ControlPointTwoTone";
+import {
+  Button,
+  Chip,
+  Divider,
+  IconButton,
+  Modal,
+  Typography,
+} from "@mui/material";
+import { open } from "@tauri-apps/api/dialog";
+import { parse } from "path-browserify";
 
 import { useAppDispatch, useAppSelector } from "@/hooks";
 import {
@@ -128,10 +138,94 @@ export const ContentSettings = () => {
         <div>
           <Typography>Scan Locations</Typography>
           <Typography variant="caption">
-            Locations that will be scanned
+            What locations will be scanned?
           </Typography>
         </div>
-        <Button>Add</Button>
+        <div>
+          {newSettings.scanLocations
+            ? newSettings.scanLocations.map((scanLocation) => {
+                return (
+                  <Chip
+                    key={scanLocation}
+                    label={scanLocation}
+                    {...(newSettings.scanLocations!.length > 1 && {
+                      onDelete: () => {
+                        console.log({ ...newSettings, scanLocation: [] });
+
+                        dispatch(
+                          setNewSettings({
+                            ...newSettings,
+                            scanLocations: newSettings.scanLocations?.filter(
+                              (location) => location !== scanLocation
+                            ),
+                          })
+                        );
+                      },
+                    })}
+                  />
+                );
+              })
+            : settings.scanLocations.map((scanLocation) => {
+                return (
+                  <Chip
+                    key={scanLocation}
+                    label={scanLocation}
+                    {...(settings.scanLocations.length > 1 && {
+                      onDelete: () => {
+                        dispatch(
+                          setNewSettings({
+                            ...newSettings,
+                            scanLocations: settings.scanLocations.filter(
+                              (location) => location !== scanLocation
+                            ),
+                          })
+                        );
+                      },
+                    })}
+                  />
+                );
+              })}
+        </div>
+        <IconButton
+          color="info"
+          onClick={async () => {
+            try {
+              const newScanDirectory = await open({ directory: true });
+
+              if (!!newScanDirectory) {
+                if (!Array.isArray(newScanDirectory)) {
+                  if (newSettings.scanLocations) {
+                    dispatch(
+                      setNewSettings({
+                        ...newSettings,
+                        scanLocations: Array.from(
+                          new Set([
+                            ...newSettings.scanLocations,
+                            newScanDirectory,
+                          ])
+                        ),
+                      })
+                    );
+                  } else {
+                    dispatch(
+                      setNewSettings({
+                        ...newSettings,
+                        scanLocations: Array.from(
+                          new Set([...settings.scanLocations, newScanDirectory])
+                        ),
+                      })
+                    );
+                  }
+                }
+              }
+            } catch (e) {
+              console.log(`Error ${e}`);
+              console.log("Could not pick a new scan directory...");
+            }
+          }}
+        >
+          <ControlPointTwoToneIcon />
+        </IconButton>
       </div>
       <Divider style={{ marginTop: "0.5rem" }} />
       <div
@@ -159,6 +253,7 @@ export const ContentSettings = () => {
                       onDelete: () => {
                         dispatch(
                           setNewSettings({
+                            ...newSettings,
                             movieExtensions: [
                               ...newSettings.movieExtensions!.filter(
                                 (currentExtension) =>
@@ -182,6 +277,7 @@ export const ContentSettings = () => {
                       onDelete: () => {
                         dispatch(
                           setNewSettings({
+                            ...newSettings,
                             movieExtensions: [
                               ...settings.movieExtensions.filter(
                                 (currentExtension) =>
@@ -196,25 +292,56 @@ export const ContentSettings = () => {
                 );
               })}
         </div>
-        <Button
-          onClick={() => {
-            dispatch(setNewSettings({ movieExtensions: [".mp4", ".mkv"] }));
+        <IconButton
+          color="info"
+          onClick={async () => {
+            try {
+              const selectedFiles = await open({ multiple: true });
+
+              if (selectedFiles) {
+                if (Array.isArray(selectedFiles)) {
+                  const newExtensions = selectedFiles.map((selectedFile) => {
+                    const { ext } = parse(selectedFile);
+
+                    return ext;
+                  });
+
+                  if (newSettings.movieExtensions) {
+                    dispatch(
+                      setNewSettings({
+                        ...newSettings,
+                        movieExtensions: Array.from(
+                          new Set([
+                            ...newSettings.movieExtensions,
+                            ...newExtensions,
+                          ])
+                        ),
+                      })
+                    );
+                  } else {
+                    dispatch(
+                      setNewSettings({
+                        ...newSettings,
+                        movieExtensions: Array.from(
+                          new Set([
+                            ...settings.movieExtensions,
+                            ...newExtensions,
+                          ])
+                        ),
+                      })
+                    );
+                  }
+                }
+              }
+            } catch (e) {
+              console.log(`Error ${e}`);
+              console.log("Could not pick a file type...");
+            }
           }}
         >
-          Add
-        </Button>
+          <ControlPointTwoToneIcon />
+        </IconButton>
       </div>
-      <pre>
-        {JSON.stringify(
-          {
-            newSettings,
-            newSettingsKeys: Object.keys(newSettings),
-            settings,
-          },
-          null,
-          2
-        )}
-      </pre>
     </>
   );
 };

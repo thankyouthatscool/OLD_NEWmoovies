@@ -19,7 +19,9 @@ export const ModalBodyWrapper = styled.div`
   width: 100%;
 `;
 
-export const SettingsOptionButton = styled(Button)<{
+export const SettingsOptionButton = styled(Button).withConfig({
+  shouldForwardProp: (prop) => !["isModified", "isSelected"].includes(prop),
+})<{
   isModified: boolean;
   isSelected: boolean;
 }>`
