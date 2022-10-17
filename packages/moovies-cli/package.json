@@ -6,8 +6,9 @@
   "scripts": {
     "build": "rm -rf ./dist && yarn tsc",
     "dev": "nodemon",
-    "dev:run": "yarn ts-node --transpile-only ./src/index.ts",
     "open:root": "code ../..",
+    "run:build": "node ./dist/index.js",
+    "run:dev": "yarn ts-node --transpile-only ./src/index.ts",
     "test": "yarn jest --watch"
   },
   "dependencies": {

@@ -4,31 +4,54 @@
 )]
 
 use glob::glob;
-
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello {}", name)
+use serde::Serialize;
+use tauri::Manager;
+#[derive(Clone, Debug, Serialize)]
+struct MovieFile {
+    extension: String,
+    location: String,
+    name: String,
 }
 
 #[tauri::command]
-fn scan_dir_for_movies(path: &str) -> Vec<String> {
-    let movie_files = glob(path)
-        .expect("Could not scan directory...")
-        .filter_map(Result::ok)
-        .collect::<Vec<_>>()
-        .iter()
-        .map(|res| res.as_path())
-        .filter_map(|res| res.file_name())
-        .filter_map(|res| res.to_str())
-        .map(|res| res.to_string())
-        .collect::<Vec<_>>();
+fn scan_dir_for_movies(path: &str) -> Vec<MovieFile> {
+    let glob_result = glob(path);
 
-    return movie_files;
+    match glob_result {
+        Ok(data) => {
+            let movie_files = data
+                .filter_map(Result::ok)
+                .collect::<Vec<_>>()
+                .iter()
+                .map(|data| data.as_path())
+                .map(|data| {
+                    let file_extension = data.extension().unwrap().to_str().unwrap().to_string();
+                    let file_location = data.to_str().unwrap().to_string();
+                    let file_name = data.file_name().unwrap().to_str().unwrap().to_string();
+
+                    return MovieFile {
+                        extension: file_extension,
+                        location: file_location,
+                        name: file_name,
+                    };
+                })
+                .collect::<Vec<_>>();
+
+            movie_files
+        }
+        Err(err) => {
+            println!("{:#?}", err);
+
+            let empty_movie_vec: Vec<MovieFile> = Vec::new();
+
+            empty_movie_vec
+        }
+    }
 }
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet, scan_dir_for_movies])
+        .invoke_handler(tauri::generate_handler![scan_dir_for_movies])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

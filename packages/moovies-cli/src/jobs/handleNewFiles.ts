@@ -151,7 +151,7 @@ const formatMovieTitle = (movieTitleWordArray: string[]) => {
 };
 
 const formatWord = (word: string, index: number) => {
-  if (["a", "an", "and", "of", "the"].includes(word.toLowerCase())) {
+  if (["a", "an", "and", "of", "the", "v"].includes(word.toLowerCase())) {
     if (index === 0) {
       `${word[0].toUpperCase()}${word.slice(1)}`;
     } else {

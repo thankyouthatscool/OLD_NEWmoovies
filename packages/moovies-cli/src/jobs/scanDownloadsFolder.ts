@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import cpy from "cpy";
-import { renameSync, rmSync, statSync } from "fs-extra";
+import { renameSync, rmSync, statSync, unlinkSync } from "fs-extra";
 import glob from "glob";
 import inquirer from "inquirer";
 import { join, parse } from "node:path";
@@ -61,7 +61,7 @@ export const scanDownloadsFolder = async (
   if (copy_confirmation) {
     const { addDataToTrack, updateOutput } = reportCopyProgressNew();
 
-    await Promise.all(
+    const res = await Promise.all(
       sceneMovies.map(async (movie) => {
         const { base, ext } = parse(movie);
         const { size } = statSync(movie);
@@ -79,8 +79,14 @@ export const scanDownloadsFolder = async (
         renameSync(join(movieLibraryDir, `TMP_${base}`), destination);
 
         // TODO: Maybe delete source after
+
+        return { movie, complete: true };
       })
     );
+
+    const allGood = res.every((entry) => entry.complete);
+
+    console.log(allGood);
 
     main();
   } else {

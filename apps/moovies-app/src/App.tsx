@@ -1,6 +1,7 @@
 import SettingsTwoToneIcon from "@mui/icons-material/SettingsTwoTone";
 import { Button, IconButton, Typography } from "@mui/material";
 import { invoke } from "@tauri-apps/api";
+import { copyFile } from "@tauri-apps/api/fs";
 import { useState } from "react";
 
 import { SettingsModal } from "@/components";
@@ -8,8 +9,14 @@ import { useAppDispatch, useAppSelector } from "@/hooks";
 import { openSettingsModal } from "@/store";
 import { RootWrapper } from "./Styled";
 
+interface MovieFile {
+  extension: string;
+  location: string;
+  name: string;
+}
+
 export const App = () => {
-  const [foundFiles, setFoundFiles] = useState<string[]>([]);
+  const [foundFiles, setFoundFiles] = useState<MovieFile[]>([]);
 
   const dispatch = useAppDispatch();
 
@@ -23,7 +30,7 @@ export const App = () => {
         try {
           const locationRes = await Promise.all(
             movieExtensions.map(async (extension) => {
-              const res: string[] = await invoke("scan_dir_for_movies", {
+              const res: MovieFile[] = await invoke("scan_dir_for_movies", {
                 path: `${scanLocation}/**/*${extension}`,
               });
 
@@ -33,18 +40,20 @@ export const App = () => {
 
           return locationRes.reduce((acc, val) => {
             return [...acc, ...val];
-          }, [] as string[]);
+          }, [] as MovieFile[]);
         } catch {
           return [];
         }
       })
     );
 
-    const foundSceneMovies = res
-      .reduce((acc, val) => {
-        return [...acc, ...val];
-      }, [] as string[])
-      .filter((file) => /^(?<title>.*).?(?<year>\d{4}).?(\d{3,4})p/.test(file));
+    const videoFilesArray = res.reduce((acc, val) => {
+      return [...acc, ...val];
+    }, [] as MovieFile[]);
+
+    const foundSceneMovies = videoFilesArray.filter((file) =>
+      /^(?<title>.*).?(?<year>\d{4}).?(\d{3,4})p/.test(file.name)
+    );
 
     setFoundFiles(() => foundSceneMovies);
   };
@@ -64,7 +73,13 @@ export const App = () => {
           Looking for {movieExtensions.join(", ")} files in{" "}
           {scanLocations.join(", ")}.
         </Typography>
-        <Button onClick={handleOtherClick}>SCAN</Button>
+        <Button
+          onClick={() => {
+            handleOtherClick();
+          }}
+        >
+          SCAN
+        </Button>
         <pre>{JSON.stringify({ foundFiles }, null, 2)}</pre>
       </RootWrapper>
     </>

@@ -60,6 +60,7 @@ dependencies = [
  "glob",
  "regex",
  "serde",
+ "serde_derive",
  "serde_json",
  "tauri",
  "tauri-build",
